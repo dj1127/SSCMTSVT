@@ -1,7 +1,7 @@
 Program main
 
     ! AUTHOR
-    ! Dr. Umberto Saetti
+    ! Umberto Saetti
     ! Assistant Professor
     ! Department of Aerospace Engineering
     ! University of Maryland
