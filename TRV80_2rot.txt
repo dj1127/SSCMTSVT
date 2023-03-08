@@ -1,0 +1,32 @@
+      0.000      - W, aircraft weight
+      2.         - nRot, number of rotors
+      2.         - Nb(1), number of blades for each rotor
+      2.         - Nb(2)
+      1.108333   - R(1), rotor radius [ft]
+      1.108333   - R(2)
+      0.182      - c(1), blade chord
+      0.182      - c(2)
+    418.         - Omega(1), rotor angular speed [rad/s]
+    418.         - Omega(2)
+      1.         - sRot(1), rotor verse of rotation [ND]: 1: CCW, -1: CCW
+     -1.         - sRot(2)
+    -12.35       - twist(1), twist angle for each rotor [rad]
+    -12.35       - twist(2)
+      5.73       - a0(1), rotor blade lift curve slope [1/rad]
+      5.73       - a0(2)
+      0.01       - delta0(1), blade drag coefficients [ND]
+      0.01       - delta0(2)
+    350.         - delta2(1)
+    350.         - delta2(2)
+      0.         - xRot(1), rotors position in body axes
+      0.         - xRot(2)
+      0.         - yRot(1)
+      0.         - yRot(2)
+      0.088      - zRot(1)
+     -0.088      - zRot(2)
+
+TRV80_2rot parameters
+
+
+ xxxxxx.xxxxxx   - (1x, f12.6)
+---------------------------------------------------------------------------
