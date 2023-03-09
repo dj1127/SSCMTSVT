@@ -11,7 +11,8 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
     integer :: NSTATES, NCTRLS, NOUT
     
     real*8, intent(in) :: x0(12,1), u0(20,1)
-    real*8, intent(out) :: A(12),B(12,20),C(10,12),D(10,20)
+    !real*8, intent(out) :: A(12),B(12,20),C(10,12),D(10,20)
+    real*8, allocatable,intent(out) :: A(:),B(:,:),C(:,:),D(:,:)
     integer:: k
     real*8 :: x_p(12,1), xdot0(12,1), y0(10,1)
     real*8 :: xdot_p1(12,1), y_p1(10,1), xdot_p2(12,1), y_p2(10,1)
@@ -24,6 +25,12 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
     NSTATES = const%NSTATES
     NCTRLS = const%NCTRLS
     NOUT = const%NOUT
+    
+    
+    allocate(A(NSTATES))
+    allocate(B(NSTATES,NCTRLS))
+    allocate(C(NOUT,NSTATES))
+    allocate(D(NOUT,NCTRLS))
     
     ! evaluate flight dynamics
     call CMTSVT(x0,u0,const,xdot0,y0)
@@ -41,8 +48,8 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
 
         x_p(k,1)=x_p(k,1)-2*DELXLIN(k)
         call CMTSVT(x_p,u0,const,xdot_p2,y_p2)
-        A(:,k)=(xdot_p1-xdot_p2)/(2*DELXLIN(k))
-        C(:,k)=(y_p1-y_p2)/(2*DELXLIN(k))
+        A(:,k)=(xdot_p1(1:12,1)-xdot_p2(1:12,1))/(2*DELXLIN(k))
+        C(:,k)=(y_p1(1:10,1)-y_p2(1:10,1))/(2*DELXLIN(k))
         
     end do
     
@@ -53,8 +60,8 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
         call CMTSVT(x0,u_p,const,xdot_p1,y_p1)
         u_p(k,1)=u_p(k,1)-2*DELCLIN(k)
         call CMTSVT(x0,u_p,const,xdot_p2,y_p2)
-        B(:,k)=(xdot_p1-xdot_p2)/(2*DELCLIN(k));
-        D(:,k)=(y_p1-y_p2)/(2*DELCLIN(k));
+        B(:,k)=(xdot_p1(1:12,1)-xdot_p2(1:12,1))/(2*DELCLIN(k));
+        D(:,k)=(y_p1(1:10,1)-y_p2(1:10,1))/(2*DELCLIN(k));
     end do
 
 end subroutine
