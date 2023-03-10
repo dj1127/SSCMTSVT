@@ -12,15 +12,16 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     real*8,intent(out) :: x0trim(12,1),u0trim(20,1),itrim
     real*8 :: XSCALE(12,1),YSCALE(10,1),TRIMVARS(14),&
     TRIMTARG(14),NSTATES,NCTRLS
+    real*8 :: A(12,12),B(12,20),C(10,12),D(10,20)
 
 
-    real*8 :: error, targ_err, trim_tol
+    real*8 :: err, targ_err, trim_tol
     real*8 :: XYSCALE(12,1)
     integer :: it, itmax
 
     ! ---------CMTSVT---------
     real*8 :: y0, xdot0
-    real*8, allocatable:: temp(:)
+    real*8 :: temp(:)
 
 
     ! Unpack aircraft constants
@@ -36,27 +37,27 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     u0trim = u0
     ! initialize number of iterations and error
     it = 0
-    error = 100
+    err = 100
     ! tolerance on trim error
     trim_tol = 5e-4
     ! maximum number of iterations
     itmax = 100
     ! trim aircraft
     write(*, '(A)') 'ITERATION      TRIM ERROR'
-    do while ((it < itmax) .and. (error > trim_tol))
+    do while ((it < itmax) .and. (err > trim_tol))
         it = it + 1
-        call CMTSVT(x0trim, u0trim, const, xdot0, y)
-        temp = [xdot0, y0]
+        call CMTSVT(x0trim, u0trim, const, xdot0, y0)
+        temp = (/xdot0, y0/)
         targvec = temp(TRIMTARG)
         targ_err = targvec - targ_des
-        XYSCALE = [XSCALE, YSCALE]
-        error = maxval(abs(targ_err) / XYSCALE(TRIMTARG))
-        write(*, '(I2, 2X, F5.4)') it, error
+        XYSCALE = reshape((/XSCALE, YSCALE/),(/12,1/))
+        err = maxval(abs(targ_err) / XYSCALE(TRIMTARG,1))
+        write(*, '(I2, 2X, F5.4)') it, err
         if (err > trim_tol) then
-            call LinSim(A, B, C, D, aircraft, x0trim, u0trim, const)
-            Jac = [A, B; C, D]
+            call LinSim(x0trim, u0trim, const, A, B, C, D)
+            Jac = (/A, B, C, D/)
             Jac = Jac(TRIMTARG, TRIMVARS)
-            trimvec = [x0trim, u0trim]
+            trimvec = (/x0trim, u0trim/)
             trimvec(TRIMVARS) = trimvec(TRIMVARS) - 0.5 * matmul(pinv(Jac), targ_err)
             x0trim = trimvec(1:NSTATES)
             u0trim = trimvec(NSTATES+1:NSTATES+NCTRLS)
