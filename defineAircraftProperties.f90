@@ -2,7 +2,7 @@
     
     implicit none
     
-    type :: TRV80_2rot
+    type :: const_struct
         !------------------------------------------------------------------------
         !
         !
@@ -70,10 +70,6 @@
         
         real*8 :: zRot(2)
 
-    end type TRV80_2rot
-    
-    
-    type :: const_
         
         real*8 :: DELXLIN(12)
         
@@ -85,6 +81,6 @@
         
         real*8 :: NOUT
         
-    end type const_
+    end type const_struct
     
     end module
