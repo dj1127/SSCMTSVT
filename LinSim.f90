@@ -12,7 +12,7 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
     
     real*8, intent(in) :: x0(12,1), u0(20,1)
     !real*8, intent(out) :: A(12),B(12,20),C(10,12),D(10,20)
-    real*8, allocatable,intent(out) :: A(:),B(:,:),C(:,:),D(:,:)
+    real*8, allocatable,intent(out) :: A(:,:),B(:,:),C(:,:),D(:,:)
     integer:: k
     real*8 :: x_p(12,1), xdot0(12,1), y0(10,1)
     real*8 :: xdot_p1(12,1), y_p1(10,1), xdot_p2(12,1), y_p2(10,1)
@@ -27,7 +27,7 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
     NOUT = const%NOUT
     
     
-    allocate(A(NSTATES))
+    allocate(A(NSTATES,NSTATES))
     allocate(B(NSTATES,NCTRLS))
     allocate(C(NOUT,NSTATES))
     allocate(D(NOUT,NCTRLS))
