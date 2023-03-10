@@ -8,8 +8,8 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     type(const_struct) :: const
 
     character(16), intent(in) :: aircraft
-    real*8,intent(in) :: x0(12,1),u0(20,1),targ_des(14,1),
-    real*8,intent(out) :: x0trim,u0trim,itrim
+    real*8,intent(in) :: x0(12,1),u0(20,1),targ_des(14,1)
+    real*8,intent(out) :: x0trim(12,1),u0trim(20,1),itrim
     real*8 :: XSCALE(12,1),YSCALE(10,1),TRIMVARS(14),&
     TRIMTARG(14),NSTATES,NCTRLS
 
