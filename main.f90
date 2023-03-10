@@ -77,7 +77,7 @@ Program main
     
     implicit none
     
-    type(trv80_2rot) :: TRV80
+    type(const_struct) :: const
     
 
 
@@ -157,7 +157,7 @@ Program main
     
 
     
-    call read_input(TRV80)
+    call read_input(const)
     
     
     ! radial increments [ND]
@@ -189,18 +189,18 @@ Program main
 
     
     ! initialize relative distance between rotors 
-    xrel(1:TRV80%nRot,1:TRV80%nRot) = 0
-    yrel(1:TRV80%nRot,1:TRV80%nRot) = 0
-    zrel(1:TRV80%nRot,1:TRV80%nRot) = 0
+    xrel(1:const%nRot,1:const%nRot) = 0
+    yrel(1:const%nRot,1:const%nRot) = 0
+    zrel(1:const%nRot,1:const%nRot) = 0
     
 
     
     ! relative distance between the center of each rotor (normalized by rotor radius)
-    do i = 1,2  !TRV80%nRot
-        do j = 1,2  !TRV80%nRot
-            xrel(i,j) = (TRV80%xRot(i)-TRV80%xRot(j))/TRV80%R(i)
-            yrel(i,j) = (TRV80%yRot(i)-TRV80%yRot(j))/TRV80%R(i)
-            zrel(i,j) = (TRV80%zRot(i)-TRV80%zRot(j))/TRV80%R(i)
+    do i = 1,2  !const%nRot
+        do j = 1,2  !const%nRot
+            xrel(i,j) = (const%xRot(i)-const%xRot(j))/const%R(i)
+            yrel(i,j) = (const%yRot(i)-const%yRot(j))/const%R(i)
+            zrel(i,j) = (const%zRot(i)-const%zRot(j))/const%R(i)
         end do
     end do
     
@@ -231,12 +231,12 @@ Program main
      ! compute  G matrix
         if (runGmat == 1) then
             ! initialize G matrix
-            G(1:3,1:3,1:TRV80%nRot,1:TRV80%nRot,1:size(chiv)) = 0
+            G(1:3,1:3,1:const%nRot,1:const%nRot,1:size(chiv)) = 0
 
             ! sweep skew angle
             do iChi = 1,size(chiv) ! 10
-                do iRot = 1,TRV80%nRot ! 2
-                    do jRot = 1,TRV80%nRot ! 2
+                do iRot = 1,const%nRot ! 2
+                    do jRot = 1,const%nRot ! 2
                         if (iRot /= jRot) then 
                             do jAero = 1,size(psiv) ! 360
                                 do iAero = 1,size(rSeg) ! 30
@@ -416,7 +416,7 @@ Program main
         end if
     else
     ! set G matrix to zeros
-        G(1:3,1:3,1:TRV80%nRot,1:TRV80%nRot,1:size(chiv)) = 0
+        G(1:3,1:3,1:const%nRot,1:const%nRot,1:size(chiv)) = 0
     end if
 !
 !
@@ -450,7 +450,7 @@ Program main
 !    conDELCLIN(11:20) = DELCLIN(1:10)
 !    
 !    ! relative scaling of states (for each rotor)
-!    call ones(1,TRV80%nRot,onemat)
+!    call ones(1,const%nRot,onemat)
 !    do i = 1,2
 !        conYSCALE(i,1) = onemat(1,i)*10.**(-3)
 !    end do
@@ -472,23 +472,23 @@ Program main
 !    ! number of control inputs 
 !    conNCTRLS = size(conDELCLIN)
 !    ! number of outputs 
-!    conNOUT = 5*TRV80%nRot
+!    conNOUT = 5*const%nRot
 !    ! trim variables and trim targets 
 !!    if (trimMethod ==1) then
 !!    else if (trimMethod ==2) then
-!!        do i = 1,TRV80%nRot
+!!        do i = 1,const%nRot
 !!        
 !!        end do
 !!        
-!!        do i = 1,TRV80%nRot
+!!        do i = 1,const%nRot
 !!        
 !!        end do
 !!    else if (trimMethod ==3) then
-!!        do i = 1,TRV80%nRot
+!!        do i = 1,const%nRot
 !!        
 !!        end do
 !!        
-!!        do i = 1,TRV80%nRot
+!!        do i = 1,const%nRot
 !!        
 !!        end do
 !!    else
@@ -509,7 +509,7 @@ Program main
 !    u0 = 0
 !    ! assemble input vector
 !    u0(1:3,1) = swashplate0
-!    u0(4:5,1) = TRV80%omega(1)
+!    u0(4:5,1) = const%omega(1)
 !    u0(6:8,1) = vel0
 !    u0(9:11,1) = ang0
 !    
@@ -517,7 +517,7 @@ Program main
 !        u0(i,1) = swashplate0(i)
 !    end do
 !    do i = 4,5
-!        u0(i,1) = TRV80%omega(i-3)
+!        u0(i,1) = const%omega(i-3)
 !    end do
 !    do i = 6,8
 !        u0(i,1) = vel0(i-5)
@@ -539,9 +539,9 @@ Program main
 !        end do
 !    elseif (trimMethod == 2) then
 !        ! desired thrust coefficient
-!        do i = 1,TRV80%nRot
-!            CTdes(i) = (TRV80%W/TRV80%nRot)/(rho*(pi*TRV80%R(i)**2)&
-!            *TRV80%Omega(I)**2*TRV80%R(i)**2)
+!        do i = 1,const%nRot
+!            CTdes(i) = (const%W/const%nRot)/(rho*(pi*const%R(i)**2)&
+!            *const%Omega(I)**2*const%R(i)**2)
 !        end do
 !        do i = 1,12
 !            targ_des(i,1) = 0
@@ -551,8 +551,8 @@ Program main
 !        end do
 !    elseif (trimMethod == 2) then
 !        ! desired thrust coefficient
-!        do i = 1,TRV80%nRot
-!            Tdes(i) = TRV80%W/TRV80%nRot
+!        do i = 1,const%nRot
+!            Tdes(i) = const%W/const%nRot
 !        end do 
 !        do i = 1,12
 !            targ_des(i,1) = 0
@@ -569,17 +569,17 @@ Program main
 !
 !    !trim indueced inflow
 !    print *, 'INDUCED INFLOW'
-!    do i=1,TRV80%nRot
+!    do i=1,const%nRot
 !        index_calc = 1+(i-1)*3
 !        x0trim_val = x0trim(index_calc)
 !    end do
 !    print 24,'lambda0      = ', x0trim_val
-!    do i=1,TRV80%nRot
+!    do i=1,const%nRot
 !        index_calc = 2+(i-1)*3
 !        x0trim_val = x0trim(index_calc)
 !    end do
 !    print 24,'lambda1c      = ', x0trim_val
-!    do i=1,TRV80%nRot
+!    do i=1,const%nRot
 !        index_calc = 3+(i-1)*3
 !        x0trim_val = x0trim(index_calc)
 !    end do
@@ -588,20 +588,20 @@ Program main
 !    
 !    ! trim total inflow 
 !    print *,'TOTAL INFLOW'
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*3+1+(i-1)*3
+!    do i=1,const%nRot
+!        index_calc = const%nRot*3+1+(i-1)*3
 !        x0trim_val = x0trim(index_calc)
 !    end do
 !    print 24,'lambda0       = ', x0trim_val
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*3+2+(i-1)*3
+!    do i=1,const%nRot
+!        index_calc = const%nRot*3+2+(i-1)*3
 !        x0trim_val = x0trim(index_calc)
 !    end do
 !    print 24,'lambda1c      = ', x0trim_val
 !    print *,' '
 !    print *,'lambda1s      = '
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*3+3+(i-1)*3
+!    do i=1,const%nRot
+!        index_calc = const%nRot*3+3+(i-1)*3
 !        x0trim_val = x0trim(index_calc)
 !    end do
 !    print 24, x0trim_val
@@ -609,28 +609,28 @@ Program main
 !    
 !    ! trim coefficients of thrust and power, thrust and power 
 !    print *,'PERFORMANCE METRICS'
-!    do i=1,TRV80%nRot
+!    do i=1,const%nRot
 !        index_calc = 1+(i-1)
 !        y0trim_val = y0trim(index_calc)
 !    end do
 !    print 15,'CT            = ', y0trim_val
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*1+1+(i-1)
+!    do i=1,const%nRot
+!        index_calc = const%nRot*1+1+(i-1)
 !        y0trim_val = y0trim(index_calc)
 !    end do
 !    print 15,'CP            = ', y0trim_val
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*2+1+(i-1)
+!    do i=1,const%nRot
+!        index_calc = const%nRot*2+1+(i-1)
 !        y0trim_val = y0trim(index_calc)
 !    end do
 !    print 52,'T [lb]        = ', y0trim_val
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*4+1+(i-1)
+!    do i=1,const%nRot
+!        index_calc = const%nRot*4+1+(i-1)
 !        y0trim_val = y0trim(index_calc)
 !    end do
 !    print 52,'Q [lb-ft]     = ', y0trim_val
-!    do i=1,TRV80%nRot
-!        index_calc = TRV80%nRot*3+1+(i-1)
+!    do i=1,const%nRot
+!        index_calc = const%nRot*3+1+(i-1)
 !        y0trim_val = y0trim(index_calc)
 !    end do
 !    print 52,'P [hp]        = ', y0trim_val
@@ -639,14 +639,14 @@ Program main
 !    ! trim controls 
 !    print *,'ROTOR CONTROLS'
 !    
-!    do i=1,TRV80%nRot
-!        index_calc = 1+(i-1)*conNCTRLS/TRV80%nRot
+!    do i=1,const%nRot
+!        index_calc = 1+(i-1)*conNCTRLS/const%nRot
 !        u0trim_val = u0trim(index_calc)
 !    end do
 !    print 21,'theta0 [deg]  = ', u0trim_val
 !    
-!    do i=1,TRV80%nRot
-!        index_calc = 4+(i-1)*conNCTRLS/TRV80%nRot
+!    do i=1,const%nRot
+!        index_calc = 4+(i-1)*conNCTRLS/const%nRot
 !        u0trim_val = u0trim(index_calc)
 !    end do
 !    print 31,'Omega [rad/s] = ', u0trim_val
