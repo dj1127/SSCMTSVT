@@ -72,17 +72,6 @@
 
         real*8 :: G(3,3,2,2,10)
 
-        
-        real*8 :: DELXLIN(12)
-        
-        real*8 :: DELCLIN(20)
-        
-        real*8 :: NSTATES
-        
-        real*8 :: NCTRLS
-        
-        real*8 :: NOUT
-
         real*8 :: XSCALE(12,1), YSCALE(10,1), DELXLIN(12), DELCLIN(20)
 
         real*8 :: NSTATES, NCTRLS, NOUT
