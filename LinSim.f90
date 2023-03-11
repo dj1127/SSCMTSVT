@@ -4,7 +4,7 @@ subroutine LinSim(x0,u0,const,A,B,C,D)
     
     implicit none
     
-    type(const_),intent(in) :: const
+    type(const_struct),intent(in) :: const
     
     ! const
     real*8 :: DELXLIN(12), DELCLIN(20)
