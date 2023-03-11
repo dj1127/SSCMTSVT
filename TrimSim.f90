@@ -28,18 +28,23 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     EXTERNAL DGETRF
 
 
+    
+
+    ! Unpack aircraft constants
+    XSCALE=const%XSCALE
+    YSCALE=const%YSCALE
+    TRIMVARS=const%TRIMVARS;
+    TRIMTARG=const%TRIMTARG;
+    NSTATES=const%NSTATES;
+    NCTRLS=const%NCTRLS;
+
+    ! allocate array size
     allocate(XSCALE(size(const%XSCALE,DIM=1),size(const%XSCALE,DIM=2)))
     allocate(YSCALE(size(const%YSCALE,DIM=1),size(const%YSCALE,DIM=2)))
     allocate(TRIMVARS(size(const%TRIMVARS)))
     allocate(TRIMTARG(size(const%TRIMTARG)))
 
-    ! Unpack aircraft constants
-    XSCALE=const%XSCALE;
-    YSCALE=const%YSCALE; 
-    TRIMVARS=const%TRIMVARS;
-    TRIMTARG=const%TRIMTARG;
-    NSTATES=const%NSTATES;
-    NCTRLS=const%NCTRLS;
+
 
     ! initial state and control input guess
     x0trim = x0

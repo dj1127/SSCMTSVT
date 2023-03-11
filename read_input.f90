@@ -29,7 +29,7 @@ subroutine read_input(const)
     !write(*,*) const%W
     
     ! number of rotors [ND]
-    read(10, 9040) const%nrot
+    read(10, '(1x,I12)') const%nrot
     
     !write(*,*) const%nRot
 

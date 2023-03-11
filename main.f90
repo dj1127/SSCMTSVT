@@ -426,8 +426,8 @@ Program main
 !        XSCALE(i,1) = 1
 !    end do
 !    ! assemble relative scale of states for all rotors - HARDCODED
-!    conXSCALE(1:6,1) = XSCALE(1:6,1)
-!    conXSCALE(7:12,1) = XSCALE(1:6,1)
+!    const%XSCALE(1:6,1) = XSCALE(1:6,1)
+!    const%XSCALE(7:12,1) = XSCALE(1:6,1)
 !    
 !    ! state perturbation size for trim and linearization (for each rotor)
 !    do j = 1,6
@@ -435,8 +435,8 @@ Program main
 !    end do
 !    
 !    ! assemble relative scale of states for all rotors 
-!    conDELXLIN(1:6) = DELXLIN(1:6)
-!    conDELXLIN(7:12) = DELXLIN(1:6)
+!    const%DELXLIN(1:6) = DELXLIN(1:6)
+!    const%DELXLIN(7:12) = DELXLIN(1:6)
 !    
 !    ! control perturbation size for trim and linearization (for each rotor)
 !    DELCLIN(1:3) = 1
@@ -446,33 +446,33 @@ Program main
 !    DELCLIN = DELCLIN*0.1
 !    
 !    ! assemble control perturbation size for all rotors 
-!    conDELCLIN(1:10) = DELCLIN(1:10)
-!    conDELCLIN(11:20) = DELCLIN(1:10)
+!    const%DELCLIN(1:10) = DELCLIN(1:10)
+!    const%DELCLIN(11:20) = DELCLIN(1:10)
 !    
 !    ! relative scaling of states (for each rotor)
 !    call ones(1,const%nRot,onemat)
 !    do i = 1,2
-!        conYSCALE(i,1) = onemat(1,i)*10.**(-3)
+!        const%YSCALE(i,1) = onemat(1,i)*10.**(-3)
 !    end do
 !    do i = 3,4
-!        conYSCALE(i,1) = onemat(1,i-2)*10.**(-4)
+!        const%YSCALE(i,1) = onemat(1,i-2)*10.**(-4)
 !    end do
 !    do i = 5,6
-!        conYSCALE(i,1) = onemat(1,i-4)
+!        const%YSCALE(i,1) = onemat(1,i-4)
 !    end do
 !    do i = 7,8
-!        conYSCALE(i,1) = onemat(1,i-6)
+!        const%YSCALE(i,1) = onemat(1,i-6)
 !    end do
 !    do i = 9,10
-!        conYSCALE(i,1) = onemat(1,i-8)
+!        const%YSCALE(i,1) = onemat(1,i-8)
 !    end do
 !    
 !    ! number of states 
-!    conNSTATES = size(conDELXLIN)
+!    const%NSTATES = size(conDELXLIN)
 !    ! number of control inputs 
-!    conNCTRLS = size(conDELCLIN)
+!    const%NCTRLS = size(conDELCLIN)
 !    ! number of outputs 
-!    conNOUT = 5*const%nRot
+!    const%NOUT = 5*const%nRot
 !    ! trim variables and trim targets 
 !!    if (trimMethod ==1) then
 !!    else if (trimMethod ==2) then
@@ -534,7 +534,7 @@ Program main
 !    
 !    ! trim targets
 !    if (trimMethod == 1) then
-!        do i =1,conNSTATES
+!        do i =1,const%NSTATES
 !            targ_des(i,1) = 0
 !        end do
 !    elseif (trimMethod == 2) then
@@ -561,7 +561,7 @@ Program main
 !            targ_des(i,1) = Tdes(i-12)
 !        end do
 !    else
-!        call zero(conNSTATES,1,mat_z14)
+!        call zero(const%NSTATES,1,mat_z14)
 !        targ_des(1:14,1) = mat_z14(1,1:14)
 !    end if
 !
@@ -640,13 +640,13 @@ Program main
 !    print *,'ROTOR CONTROLS'
 !    
 !    do i=1,const%nRot
-!        index_calc = 1+(i-1)*conNCTRLS/const%nRot
+!        index_calc = 1+(i-1)*const%NCTRLS/const%nRot
 !        u0trim_val = u0trim(index_calc)
 !    end do
 !    print 21,'theta0 [deg]  = ', u0trim_val
 !    
 !    do i=1,const%nRot
-!        index_calc = 4+(i-1)*conNCTRLS/const%nRot
+!        index_calc = 4+(i-1)*const%NCTRLS/const%nRot
 !        u0trim_val = u0trim(index_calc)
 !    end do
 !    print 31,'Omega [rad/s] = ', u0trim_val
