@@ -16,6 +16,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     
     use defineAircraftProperties
     use constant
+    use func
     
     
     implicit none
@@ -35,7 +36,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     real*8 :: G(3,3,2,2,10)
     
     real*8,dimension(2) :: sigma,a0,twist,delta0,delta2
-    integer*8 :: NCTRLS
+    integer :: NCTRLS
     
 
     real*8 :: lambda_s(6),lambda_s_reshape(3,2),lambda_tot(6), lambda_tot_reshape(3,2)
@@ -75,6 +76,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     xRot = const%xRot
     yRot = const%yRot
     zRot = const%zRot
+    G = const%G
     sigma = const%sigma
     a0 = const%a0
     twist = const%twist
