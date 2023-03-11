@@ -4,7 +4,7 @@
     
     use defineAircraftProperties
     
-
+      
     
     ! number of radial elements [ND]
     real, parameter :: nRE = 30
@@ -13,6 +13,7 @@
     real, parameter :: nAE = 360
     
     integer, parameter :: maxdim =100   ! Every array has size of 100 instead of allocatable
+    
     
     ! radial increments [ND]
     real*8 :: dr, dpsi

@@ -22,7 +22,7 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
 
     ! ---------CMTSVT---------
     real*8 :: y0, xdot0
-    real*8 :: temp(:)
+    real*8,allocatable :: temp(:)
 
     ! External Subroutines
     EXTERNAL DGETRF
@@ -64,7 +64,7 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
         write(*, '(I2, 2X, F5.4)') it, err
         if (err > trim_tol) then
             call LinSim(x0trim, u0trim, const, A, B, C, D)
-            Jac_temp = reshape((/A, B, C, D/),(/ (size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2)) /))
+            Jac_temp = reshape((/A, B, C, D/),(/ (size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2)) /), order = (/ 2, 1 /))
             Jac = Jac_temp(TRIMTARG, TRIMVARS)
             trimvec = (/x0trim, u0trim/)
             ! pseudo inverse

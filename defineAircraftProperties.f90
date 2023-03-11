@@ -70,6 +70,8 @@
         
         real*8 :: zRot(2)
 
+        real*8 :: M(3,3)
+
         real*8 :: G(3,3,2,2,10)
 
         real*8 :: XSCALE(12,1), YSCALE(10,1), DELXLIN(12), DELCLIN(20)
