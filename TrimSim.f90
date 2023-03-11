@@ -10,9 +10,10 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     character(16), intent(in) :: aircraft
     real*8,intent(in) :: x0(12,1),u0(20,1),targ_des(14,1)
     real*8,intent(out) :: x0trim(12,1),u0trim(20,1),itrim
-    real*8 :: XSCALE(12,1),YSCALE(10,1),TRIMVARS(14),&
-    TRIMTARG(14),NSTATES,NCTRLS
+    real*8,allocatable :: XSCALE(:,:),YSCALE(:,:),TRIMVARS(:),TRIMTARG(:),Jac_temp(:,:),Jac(:,:),Jac_mul(:,:)
+    real*8 :: NSTATES,NCTRLS
     real*8 :: A(12,12),B(12,20),C(10,12),D(10,20)
+
 
 
     real*8 :: err, targ_err, trim_tol
@@ -23,6 +24,14 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     real*8 :: y0, xdot0
     real*8 :: temp(:)
 
+    ! External Subroutines
+    EXTERNAL DGETRF
+
+
+    allocate(XSCALE(size(const%XSCALE,DIM=1),size(const%XSCALE,DIM=2)))
+    allocate(YSCALE(size(const%YSCALE,DIM=1),size(const%YSCALE,DIM=2)))
+    allocate(TRIMVARS(size(const%TRIMVARS)))
+    allocate(TRIMTARG(size(const%TRIMTARG)))
 
     ! Unpack aircraft constants
     XSCALE=const%XSCALE;
@@ -55,10 +64,15 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
         write(*, '(I2, 2X, F5.4)') it, err
         if (err > trim_tol) then
             call LinSim(x0trim, u0trim, const, A, B, C, D)
-            Jac = (/A, B, C, D/)
-            Jac = Jac(TRIMTARG, TRIMVARS)
+            Jac_temp = reshape((/A, B, C, D/),(/ (size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2)) /))
+            Jac = Jac_temp(TRIMTARG, TRIMVARS)
             trimvec = (/x0trim, u0trim/)
-            trimvec(TRIMVARS) = trimvec(TRIMVARS) - 0.5 * matmul(pinv(Jac), targ_err)
+            ! pseudo inverse
+            Jac_mul = matmul(transpose(Jac),Jac)
+            call DGETRF(size(A,Dim=1),size(A,Dim=2),Jac_mul,size(A,Dim=1))
+            Jac_pinv = matmul(Jac_mul,transpose(Jac))
+
+            trimvec(TRIMVARS) = trimvec(TRIMVARS) - 0.5 * matmul(Jac_pinv, targ_err)
             x0trim = trimvec(1:NSTATES)
             u0trim = trimvec(NSTATES+1:NSTATES+NCTRLS)
         end if
