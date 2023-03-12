@@ -1,7 +1,7 @@
 subroutine read_input(const)
 
 
-    use defineAircraftProperties
+    use AllType
     use constant
     
     implicit none

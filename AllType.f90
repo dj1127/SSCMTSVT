@@ -1,4 +1,4 @@
-    module AllType
+module AllType
     
     implicit none
 
@@ -113,4 +113,4 @@
         
     end type const_struct
     
-    end module
+end module AllType
