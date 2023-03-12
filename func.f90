@@ -113,4 +113,24 @@ module func
       !allocate(B())
    end function
 
+   function interp1(x,v,xq) result(vout)
+
+      ! linear interpolation for single query point and 3D v
+      real*8 :: x(10), v(10,3,3), xq
+      real*8 :: vout(1,3,3)
+      integer :: i,j,k
+  
+      do k = 1,size(v,dim=3)
+          do j = 1,size(v,dim=2)
+              do i = 1,size(x)
+                  if (x(i) == xq) then
+                      vout(1,j,k) = v(i,j,k)
+                  end if
+              end do
+          end do
+      end do
+  
+  
+  end function
+
 end module func
