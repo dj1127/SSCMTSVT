@@ -88,14 +88,6 @@ module func
       !integer :: siz_1D, siz_2D, siz_3D
       integer :: i,j,k
   
-      do i = 1,3
-          do j = 1,3
-              do k = 1,10
-                  A(i,j,k) = i*j*k
-              end do
-          end do
-      end do
-  
   
       do i = 1,3
           do j = 1,3
