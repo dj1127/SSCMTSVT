@@ -1,5 +1,5 @@
       0.000      - W, aircraft weight
-      2.         - nRot, number of rotors
+      2          - nRot, number of rotors
       2.         - Nb(1), number of blades for each rotor
       2.         - Nb(2)
       1.108333   - R(1), rotor radius [ft]
