@@ -79,4 +79,38 @@ module func
 
    end 
 
+   function permute(A,order) result(per_A) 
+      real*8 :: A(3,3,10)
+      integer :: order(3)
+      real*8 :: per_A(10,3,3)
+      !real*8, allocatable :: B(:,:,:)
+      
+      !integer :: siz_1D, siz_2D, siz_3D
+      integer :: i,j,k
+  
+      do i = 1,3
+          do j = 1,3
+              do k = 1,10
+                  A(i,j,k) = i*j*k
+              end do
+          end do
+      end do
+  
+  
+      do i = 1,3
+          do j = 1,3
+              do k = 1,10
+                  per_A(k,i,j) = A(i,j,k)
+              end do
+          end do
+      end do
+  
+  
+      !siz_1D = size(A,Dim=1)
+      !siz_2D = size(A,Dim=2)
+      !siz_3D = size(A,Dim=3)
+  
+      !allocate(B())
+   end function
+
 end module func
