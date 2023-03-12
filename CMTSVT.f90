@@ -268,7 +268,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         do j=1,nRot
             if (i/=j) then
                 ! interpolate G matrix based on skew angle 
-                Gtemp = transpose(G(:,:,i,j,:))
+                Gtemp = (squeeze(G(:,:,i,j,:)))
                 GG(:,:,i,j) = interp1(const%chiv, Gtemp, chi(1,i))
                 ! off-diagonal elements of L matrix 
                 Rmat(:,:,i,j) = 1.0/VT(j)/(1.0-1.5*mu(1,j)**2) * &
