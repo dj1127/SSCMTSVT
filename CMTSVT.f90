@@ -62,11 +62,15 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     
     ! ---------------------- INFLOW DYNAMICS PARAMETERS------------------------
     
-    real*8, allocatable :: lambda(:,:,:), L(:,:,:,:), Rmat(:,:,:,:), GG(:,:,:,:)
+    real*8, allocatable :: lambda(:,:,:), lambda_sum(:,:), L(:,:,:,:), Rmat(:,:,:,:), GG(:,:,:,:)
 
-    real*8, allocatable :: lambda_tot_new(:,:), lambda_dot(:,:), lambda_tot_calc(3,2)
+    real*8, allocatable :: lambda_tot_new(:,:), lambda_dot(:,:)
+    
+    real*8 :: lambda_tot_calc(3,2)
 
     real*8, allocatable :: A(:,:), b(:,:)
+
+    real*8 :: interp_G(1,3,3)
 
     ! -------------------------------- Result ----------------------------------
     
@@ -159,7 +163,17 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         czeta = dcos(zeta)
         szeta = dsin(zeta)
         ! wind to shaft transformation
-        Th2w = reshape( (/1., 0., 0., 0., czeta, -szeta, 0., szeta, czeta/), (/3,3/), order = (/ 2, 1 /))
+        Th2W(1,1) = 1.
+        Th2W(1,2) = 0.
+        Th2W(1,3) = 0.
+        Th2W(2,1) = 0.
+        Th2W(2,2) = czeta
+        Th2W(2,3) = - szeta
+        Th2W(3,1) = 0.
+        Th2W(3,2) = szeta
+        Th2W(3,3) = czeta
+
+        !Th2w = reshape( (/1., 0., 0., 0., czeta, -szeta, 0., szeta, czeta/), (/3,3/), order = (/ 2, 1 /))
 
         ! tansform roll and pitch rates to wind frame and non-dimensionalize
         if (sRot(i) == 1) then
@@ -208,19 +222,20 @@ subroutine CMTSVT(x,inp,const,xdot,y)
             mu(1,i)**2*beta0-0.0625*mu(1,i)*beta1sw)*theta1sw+0.0625*mu(1,i)* &
             (alpha1sw-theta1sw)*theta1cw-0.125*mu(1,i)*(alpha1sw-theta1sw)* &
             beta1sw+0.375*mu(1,i)*(alpha1sw-theta1sw)*theta1sw)
+
         CP(1,i) = 0.5*a0(i)*sigma(i)*(-(muz-lambda0)*(2*CTa(1,i)/(a0(i)*sigma(i))) &
             +mu(1,i)*(2*CXw/(a0(i)*sigma(i)))+0.25*delta/a0(i)*(1.+4.6*mu(1,i)**2))
 
         ! aerodynamic roll and pitch moment coefficients
-        F1s1=alpha1sw/3+mu(1,i)*(theta0+muz-lambda0+2*twist(i)/3)
-        F1c1=alpha1cw/3
-        Cla=-0.5*a0(i)*sigma(i)*0.375*F1s1
-        CMa=-0.5*a0(i)*sigma(i)*0.375*F1c1
+        F1s1 = alpha1sw/3+mu(1,i)*(theta0+muz-lambda0+2*twist(i)/3)
+        F1c1 = alpha1cw/3
+        Cla = -0.5*a0(i)*sigma(i)*0.375*F1s1
+        CMa = -0.5*a0(i)*sigma(i)*0.375*F1c1
         ! aerodynamic forces and moments
-        F(:,i)=(/CTa(1,i), CMa, Cla/)
+        F(:,i) = (/CTa(1,i), CMa, Cla/)
         ! iteration to solve for quasi-steady lambda0
-        lambda0_qs=lambda0
-        delta_lambda=10.
+        lambda0_qs = lambda0
+        delta_lambda = 10.
         iter=0
         do while((abs(delta_lambda)>1e-9) .and. (iter<70))
             lambda0_qsn=CTa(1,i)/(2*sqrt(mu(1,i)**2+(lambda0_qs-muz)**2))
@@ -239,8 +254,10 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     ! --------------------------- INFLOW DYNAMICS -----------------------------
 
     ! initialize inflow matrix (contains self-induced and interference components)
-    lambda = 0
     allocate(lambda(3,nRot,nRot))
+    lambda = 0
+    
+    allocate(lambda_sum(3,nRot))
     ! reshape self-induced inflow
     lambda_s_reshape = reshape(lambda_s, (/3,nRot/), order = (/ 2, 1 /))
     ! fill inflow matrix with self-induced inflow 
@@ -258,9 +275,19 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         do j=1,nRot
             if (i==j) then
                 ! block diagonal elements of L matrix 
-                L(:,:,i,j)= reshape((/ 0.5/VT(1,i), 0., 0., 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2),&
-                            4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i)))), 0.0, 0.0, 0.0,&
-                            4/V(1,i)/(1.0+dcos(chi(1,i))) /), (/3,3/), order = (/ 2, 1 /))
+                L(:,:,1,1) = 0.5/VT(1,i)
+                L(:,:,1,2) = 0.
+                L(:,:,1,3) = 0.
+                L(:,:,2,1) = 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2)
+                L(:,:,2,2) = 4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i))))
+                L(:,:,2,3) = 0.
+                L(:,:,3,1) = 0.
+                L(:,:,3,2) = 0.
+                L(:,:,3,3) = 4/V(1,i)/(1.0+dcos(chi(1,i)))
+
+                !L(:,:,i,j)= reshape((/ 0.5/VT(1,i), 0., 0., 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2),&
+                !            4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i)))), 0.0, 0.0, 0.0,&
+                !            4/V(1,i)/(1.0+dcos(chi(1,i))) /), (/3,3/), order = (/ 2, 1 /))
             end if
         end do
     end do
@@ -274,12 +301,26 @@ subroutine CMTSVT(x,inp,const,xdot,y)
             if (i/=j) then
                 ! interpolate G matrix based on skew angle 
                 Gtemp = permute(squeeze(G(:,:,i,j,:)),(/3,1,2/))
-                GG(:,:,i,j) = interp1(const%chiv, Gtemp, chi(1,i))
+                interp_G = interp1(const%chiv, Gtemp, chi(1,i))
+                GG(:,:,i,j) = reshape((/interp_G(:,:,1),interp_G(:,:,2),interp_G(:,:,3)/),(/3,3/),order = (/2,1/))
+
                 ! off-diagonal elements of L matrix 
-                Rmat(:,:,i,j) = 1.0/VT(j)/(1.0-1.5*mu(1,j)**2) * &
-                                 (/1.0, 0.0, -3.0*mu(1,j), &
-                                  0.0, 3.0*(1.0-1.5*mu(1,j)**2), 0.0, &
-                                 -1.5*mu(1,j), 0.0, 3.0/)
+                Rmat(:,:,1,1) = 1.
+                Rmat(:,:,1,2) = 0.
+                Rmat(:,:,1,3) = -3.0*mu(1,j)
+                Rmat(:,:,2,1) = 0.
+                Rmat(:,:,2,2) = 3.0*(1.0-1.5*mu(1,j)**2)
+                Rmat(:,:,2,3) = 0.
+                Rmat(:,:,3,1) = -1.5*mu(1,j)
+                Rmat(:,:,3,2) = 0.
+                Rmat(:,:,3,3) = 3.
+                
+                Rmat = Rmat * 1.0/(VT(1,j)*(1.0-1.5*mu(1,j)**2))
+
+                !Rmat(:,:,i,j) = 1.0/(VT(1,j)*(1.0-1.5*mu(1,j)**2)) * &
+                !                 (/ 1.0, 0.0, -3.0*mu(1,j), &
+                !                  0.0, 3.0*(1.0-1.5*mu(1,j)**2), 0.0, &
+                !                 -1.5*mu(1,j), 0.0, 3.0/)
                 L(:,:,i,j) = matmul(GG(:,:,i,j), matmul(Rmat(:,:,i,j), &
                                    matmul(inv(L(:,:,j,j)),L(:,:,i,j))))
             end if
@@ -300,7 +341,8 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     lambda_tot_new = 0
     ! total inflow (self-induced + interference)
     do i=1,nRot
-        lambda_tot_new(:,i) = sum(lambda(:,i,:), dim=3)
+        lambda_sum = lambda(:,i,:)
+        lambda_tot_new(:,i) = sum(lambda_sum, dim=3)
         ! lambda_tot_new(:,i)=sum(lambda(:,:,i),2);
     end do
 
