@@ -1,6 +1,6 @@
 subroutine LinSim(x0,u0,const,A,B,C,D)
 
-    use defineAircraftProperties
+    use AllType
     
     implicit none
     
