@@ -1,5 +1,7 @@
 module func
 
+   implicit none
+
    contains 
    ! Returns the inverse of a matrix calculated by finding the LU
    ! decomposition.  Depends on LAPACK.
@@ -35,5 +37,46 @@ module func
          stop 'Matrix inversion failed!'
       end if
    end function inv
+
+   !!!!!! ------------------- this is hard coded ------------------- !!!!!
+
+   function squeeze(A) result(B)
+      real*8 :: A(3,3,2,2,10)
+      real*8 :: B(3,3,10)
+      !integer :: siz(size(A))
+      integer :: i
+      !logical :: is_scalar
+
+      do i = 1,10
+         B(:,:,i) = A(:,:,2,1,i)
+      end do
+
+      !siz = shape(A)
+      !do i = 1, size(siz)
+      !   if (siz(i) == 1) then
+      !      siz(i) = 0
+      !   end if
+      !end do
+
+      !B = reshape(A, siz)
+
+      !A(:,:,2) = 0
+
+      !siz_1D = size(A,Dim=1)
+      !siz_2D = size(A,Dim=2)
+      !siz_3D = size(A,Dim=3)
+  
+      !siz = (/siz_1D,siz_2D,siz_3D/)
+  
+      !do i = 1, size(A)
+      !    if (sum(A(:,:,i)) == 0) then
+      !        siz(i) = 0
+      !    end if 
+      !    if (siz(i) /= 0) then
+      !        new_siz = siz(i)
+      !    end if 
+      !end do
+
+   end 
 
 end module func
