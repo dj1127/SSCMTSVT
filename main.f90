@@ -162,10 +162,10 @@ Program main
     
     ! radial increments [ND]
 
-    dr = 1/nRE
+    const%dr = 1/nRE
 
     ! azimutal increments [rad]
-    dpsi = 2*pi/nAE
+    const%dpsi = 2*pi/nAE
 
     ! vector of non-dimensional radial stations [ND]
     !
@@ -174,7 +174,7 @@ Program main
     ! INCR = dr
     ! END = 1-dr/2
     !
-    rSeg = [((dr/2) + dr * (i-1), i=1,ceiling(((1-dr/2)-(dr/2))/dr+1) )]
+    const%rSeg = [((const%dr/2) + const%dr * (i-1), i=1,ceiling(((1-const%dr/2)-(const%dr/2))/const%dr+1) )]
     
 
 
@@ -184,33 +184,33 @@ Program main
     ! INCR = dpsi
     ! END = 2*pi-dpsi
     !
-    psiv = [(0 + dpsi * (i-1), i=1,ceiling(((2*pi-dpsi)-0)/dpsi+1) )]
+    const%psiv = [(0 + const%dpsi * (i-1), i=1,ceiling(((2*pi-const%dpsi)-0)/const%dpsi+1) )]
     
 
     
     ! initialize relative distance between rotors 
-    xrel(1:const%nRot,1:const%nRot) = 0
-    yrel(1:const%nRot,1:const%nRot) = 0
-    zrel(1:const%nRot,1:const%nRot) = 0
+    const%xrel(1:const%nRot,1:const%nRot) = 0
+    const%yrel(1:const%nRot,1:const%nRot) = 0
+    const%zrel(1:const%nRot,1:const%nRot) = 0
     
 
     
     ! relative distance between the center of each rotor (normalized by rotor radius)
     do i = 1,2  !const%nRot
         do j = 1,2  !const%nRot
-            xrel(i,j) = (const%xRot(i)-const%xRot(j))/const%R(i)
-            yrel(i,j) = (const%yRot(i)-const%yRot(j))/const%R(i)
-            zrel(i,j) = (const%zRot(i)-const%zRot(j))/const%R(i)
+            const%xrel(i,j) = (const%xRot(i)-const%xRot(j))/const%R(i)
+            const%yrel(i,j) = (const%yRot(i)-const%yRot(j))/const%R(i)
+            const%zrel(i,j) = (const%zRot(i)-const%zRot(j))/const%R(i)
         end do
     end do
     
     
     ! apparent mass matrix
-    M(1:3,1:3) = 0
+    const%M(1:3,1:3) = 0
     
-    M(1,1) = 8/(3*pi)
-    M(2,2) = 16/(45*pi)
-    M(3,3) = 16/(45*pi)
+    const%M(1,1) = 8/(3*pi)
+    const%M(2,2) = 16/(45*pi)
+    const%M(3,3) = 16/(45*pi)
 
     
     
@@ -220,7 +220,7 @@ Program main
     ! INIT = 0
     ! INCR = 10
     ! END = 90
-    chiv = [( 10 * (i-1), i=1,10 )]*(pi/180)
+    const%chiv = [( 10 * (i-1), i=1,10 )]*(pi/180)
     
     
     print *, '==================== Integration Start ======================'   
@@ -231,34 +231,31 @@ Program main
      ! compute  G matrix
         if (runGmat == 1) then
             ! initialize G matrix
-            G(1:3,1:3,1:const%nRot,1:const%nRot,1:size(chiv)) = 0
+            G(1:3,1:3,1:const%nRot,1:const%nRot,1:size(const%chiv)) = 0
 
             ! sweep skew angle
-            do iChi = 1,size(chiv) ! 10
+            do iChi = 1,size(const%chiv) ! 10
                 do iRot = 1,const%nRot ! 2
                     do jRot = 1,const%nRot ! 2
                         if (iRot /= jRot) then 
-                            do jAero = 1,size(psiv) ! 360
-                                do iAero = 1,size(rSeg) ! 30
+                            do jAero = 1,size(const%psiv) ! 360
+                                do iAero = 1,size(const%rSeg) ! 30
                                     
                                     ! aerodynamic calculation point
-                                    xij = xrel(iRot,jRot)+rSeg(iAero)*dcos(psiv(jAero))
-                                    yij = yrel(iRot,jRot)+rSeg(iAero)*dsin(psiv(jAero))
-                                    zij = zrel(iRot,jRot)
+                                    xij = const%xrel(iRot,jRot)+const%rSeg(iAero)*dcos(const%psiv(jAero))
+                                    yij = const%yrel(iRot,jRot)+const%rSeg(iAero)*dsin(const%psiv(jAero))
+                                    zij = const%zrel(iRot,jRot)
                                     
                                     ! Biot-Savart calculations
-                                    call bsvel(xij,yij,zij,psiv,chiv(iChi),size(psiv),K)
+                                    call bsvel(xij,yij,zij,const%psiv,const%chiv(iChi),size(const%psiv),K)
                                     
                                     ! inner integrals
                                     if (intMethod == 1) then
-                                        res = 0.
-                                        call trapz(psiv,K,360,res)
+                                        call trapz(const%psiv,K,360,res)
                                         innerInt1(iAero,jAero) = res
-                                        res = 0.
-                                        call trapz(psiv,K*dcos(psiv),360,res)
+                                        call trapz(const%psiv,K*dcos(const%psiv),360,res)
                                         innerInt2(iAero,jAero) = res
-                                        res = 0.
-                                        call trapz(psiv,K*dsin(psiv),360,res)
+                                        call trapz(const%psiv,K*dsin(const%psiv),360,res)
                                         innerInt3(iAero,jAero) = res
                                         
                                     else if (intMethod == 2) then
@@ -282,52 +279,50 @@ Program main
                                     innerInt1_1d(i) = innerInt1_t(i,1)
                                 end do
                                 do i = 1,30
-                                    inner1_calc(i) = innerInt1_1D(i)*rSeg(i)
+                                    inner1_calc(i) = innerInt1_1D(i)*const%rSeg(i)
                                 end do
-                                call trapz(rSeg,inner1_calc,30,res)
+                                call trapz(const%rSeg,inner1_calc,30,res)
                                 interInt1(jAero) = res
-                                
-                                res = 0.
+
                                 innerInt2_t = transpose(innerInt2(1:30,jAero:jAero))
                                 do i = 1,30
                                     innerInt2_1d(i) = innerInt2_t(i,1)
                                 end do
                                 do i = 1,30
-                                    inner2_calc(i) = innerInt2_1D(i)*rSeg(i)
+                                    inner2_calc(i) = innerInt2_1D(i)*const%rSeg(i)
                                 end do
-                                call trapz(rSeg,inner2_calc,30,res)
+                                call trapz(const%rSeg,inner2_calc,30,res)
                                 interInt2(jAero) = res
-                                
-                                res = 0.
+
                                 innerInt3_t = transpose(innerInt3(1:30,jAero:jAero))
                                 do i = 1,30
                                     innerInt3_1d(i) = innerInt3_t(i,1)
                                 end do
                                 do i = 1,30
-                                    inner3_calc(i) = innerInt3_1D(i)*rSeg(i)
+                                    inner3_calc(i) = innerInt3_1D(i)*const%rSeg(i)
                                 end do
-                                call trapz(rSeg,inner3_calc,30,res)
+                                call trapz(const%rSeg,inner3_calc,30,res)
                                 interInt3(jAero) = res
                                 
                                 res = 0.
                                 do i = 1,30
-                                    inner4_calc(i) = innerInt1_1D(i)*(rSeg(i)**2)
+                                    inner4_calc(i) = innerInt1_1D(i)*(const%rSeg(i)**2)
                                 end do
-                                call trapz(rSeg,inner4_calc,30,res)
+                                call trapz(const%rSeg,inner4_calc,30,res)
                                 interInt4(jAero) = res
                                 
                                 res = 0.
                                 do i = 1,30
-                                    inner5_calc(i) = innerInt2_1D(i)*(rSeg(i)**2)
+                                    inner5_calc(i) = innerInt2_1D(i)*(const%rSeg(i)**2)
                                 end do
-                                call trapz(rSeg,inner5_calc,30,res)
+                                call trapz(const%rSeg,inner5_calc,30,res)
                                 interInt5(jAero) = res
                                 
                                 res = 0.
                                 do i = 1,30
-                                    inner6_calc(i) = innerInt3_1D(i)*(rSeg(i)**2)
+                                    inner6_calc(i) = innerInt3_1D(i)*(const%rSeg(i)**2)
                                 end do
-                                call trapz(rSeg,inner6_calc,30,res)
+                                call trapz(const%rSeg,inner6_calc,30,res)
                                 interInt6(jAero) = res
                                 
                                 
@@ -337,55 +332,55 @@ Program main
                             ! outer integral
                             if (intMethod == 1) then
                             res = 0.
-                            call trapz(psiv,interInt1,360,res)
+                            call trapz(const%psiv,interInt1,360,res)
                             G(1,1,iRot,jRot,iChi) = -(1/(4*(pi**2)))*res
                             
                             res = 0.
-                            call trapz(psiv,interInt2,360,res)
+                            call trapz(const%psiv,interInt2,360,res)
                             G(1,2,iRot,jRot,iChi) = -(1/(4*(pi**2)))*res
                             
                             res = 0.
-                            call trapz(psiv,interInt3,360,res)
+                            call trapz(const%psiv,interInt3,360,res)
                             G(1,3,iRot,jRot,iChi) = -(1/(4*(pi**2)))*res
                             
                             res = 0.
                             do i = 1,360
-                                inter4c_calc(i) = interInt4(i)*dcos(psiv(i))
+                                inter4c_calc(i) = interInt4(i)*dcos(const%psiv(i))
                             end do
-                            call trapz(psiv,inter4c_calc,360,res)
+                            call trapz(const%psiv,inter4c_calc,360,res)
                             G(2,1,iRot,jRot,iChi) = -(1/(pi**2))*res
                             
                             res = 0.
                             do i = 1,360
-                                inter5c_calc(i) = interInt5(i)*dcos(psiv(i))
+                                inter5c_calc(i) = interInt5(i)*dcos(const%psiv(i))
                             end do
-                            call trapz(psiv,inter5c_calc,360,res)
+                            call trapz(const%psiv,inter5c_calc,360,res)
                             G(2,2,iRot,jRot,iChi) = -(1/(pi**2))*res
                             
                             res = 0.
                             do i = 1,360
-                                inter6c_calc(i) = interInt6(i)*dcos(psiv(i))
+                                inter6c_calc(i) = interInt6(i)*dcos(const%psiv(i))
                             end do
-                            call trapz(psiv,inter6c_calc,360,res)
+                            call trapz(const%psiv,inter6c_calc,360,res)
                             G(2,3,iRot,jRot,iChi) = -(1/(pi**2))*res
                             
                             res = 0.
                             do i = 1,360
-                                inter4s_calc(i) = interInt4(i)*sin(psiv(i))
+                                inter4s_calc(i) = interInt4(i)*sin(const%psiv(i))
                             end do
-                            call trapz(psiv,inter4s_calc,360,res)
+                            call trapz(const%psiv,inter4s_calc,360,res)
                             G(3,1,iRot,jRot,iChi) = -(1/(pi**2))*res
                             
                             do i = 1,360
-                                inter5s_calc(i) = interInt5(i)*dsin(psiv(i))
+                                inter5s_calc(i) = interInt5(i)*dsin(const%psiv(i))
                             end do
-                            call trapz(psiv,inter5s_calc,360,res)
+                            call trapz(const%psiv,inter5s_calc,360,res)
                             G(3,2,iRot,jRot,iChi) = -(1/(pi**2))*res
                             
                             do i = 1,360
-                                inter6s_calc(i) = interInt6(i)*dsin(psiv(i))
+                                inter6s_calc(i) = interInt6(i)*dsin(const%psiv(i))
                             end do
-                            call trapz(psiv,inter6s_calc,360,res)
+                            call trapz(const%psiv,inter6s_calc,360,res)
                             G(3,3,iRot,jRot,iChi) = -(1/(pi**2))*res
                             else if (intMethod == 2) then
                             
@@ -416,7 +411,7 @@ Program main
         end if
     else
     ! set G matrix to zeros
-        G(1:3,1:3,1:const%nRot,1:const%nRot,1:size(chiv)) = 0
+        G(1:3,1:3,1:const%nRot,1:const%nRot,1:size(const%chiv)) = 0
     end if
 !
 !
