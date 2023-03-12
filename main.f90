@@ -69,14 +69,15 @@ Program main
 
 
 
-    use defineAircraftProperties
+    use AllType
     use constant
-    use Sim_Parameter
-    use Trim_Parameter
+    use Parameter
+
 
     
     implicit none
     
+
     type(const_struct) :: const
     
 
