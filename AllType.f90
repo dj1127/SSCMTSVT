@@ -1,4 +1,4 @@
-    module defineAircraftProperties
+    module AllType
     
     implicit none
 
