@@ -97,19 +97,19 @@ module AllType
         real*8 :: DELCLIN(20)
     
         ! number of states
-        integer :: NSTATES
+        real*8 :: NSTATES
 
         ! number of control inputs
-        integer :: NCTRLS
+        real*8 :: NCTRLS
 
         ! number of outputs
         integer :: NOUT
 
         ! trim variables
-        real*8 :: TRIMVARS(14)
+        real*8,allocatable :: TRIMVARS(:)
 
         ! trim targets
-        real*8 :: TRIMTARG(14)
+        real*8,allocatable :: TRIMTARG(:)
         
     end type const_struct
     
