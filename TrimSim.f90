@@ -1,7 +1,6 @@
-subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
-    TRIMTARG,NSTATES,NCTRLS,x0trim,u0trim,itrim)
+subroutine TrimSim(aircraft,x0,u0,targ_des,const,x0trim,u0trim,itrim)
 
-    use defineAircraftProperties
+    use AllType
 
     implicit none
 
@@ -21,7 +20,7 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     integer :: it, itmax
 
     ! ---------CMTSVT---------
-    real*8 :: y0, xdot0
+    real*8 :: y0(10,1), xdot0(12,1)
     real*8,allocatable :: temp(:)
 
     ! External Subroutines
@@ -61,7 +60,7 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,XSCALE,YSCALE,TRIMVARS,&
     do while ((it < itmax) .and. (err > trim_tol))
         it = it + 1
         call CMTSVT(x0trim, u0trim, const, xdot0, y0)
-        temp = (/xdot0, y0/)
+        temp = reshape((/xdot0, y0/),(//) ! need to be edited
         targvec = temp(TRIMTARG)
         targ_err = targvec - targ_des
         XYSCALE = reshape((/XSCALE, YSCALE/),(/12,1/))

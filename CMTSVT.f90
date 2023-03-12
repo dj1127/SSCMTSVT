@@ -14,7 +14,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
 
     !--------------------------------------------------------------------------
     
-    use defineAircraftProperties
+    use AllType
     use constant
     use func
     
@@ -33,7 +33,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     
     integer :: nRot
     
-    real*8 :: G(3,3,2,2,10)
+    real*8 :: G(3,3,2,2,10), Gtemp(10,3,3)
     
     real*8,dimension(2) :: sigma,a0,twist,delta0,delta2
     integer :: NCTRLS
@@ -64,9 +64,14 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     
     real*8, allocatable :: lambda(:,:,:), L(:,:,:,:), Rmat(:,:,:,:), GG(:,:,:,:)
 
-    real*8, allocatable :: lambda_tot_new(:,:), lambda_dot(:,:)
+    real*8, allocatable :: lambda_tot_new(:,:), lambda_dot(:,:), lambda_tot_calc(3,2)
 
-    real*8, allocatable :: A(:,:), B(:,:)
+    real*8, allocatable :: A(:,:), b(:,:)
+
+    ! -------------------------------- Result ----------------------------------
+    
+    real*8, allocatable :: Ta(:,:), Q(:,:), Pow(:,:)
+
     ! --------------------------------------------------------------------------
     
     ! map constants data structure to local variables 
@@ -268,7 +273,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         do j=1,nRot
             if (i/=j) then
                 ! interpolate G matrix based on skew angle 
-                Gtemp = (squeeze(G(:,:,i,j,:)))
+                Gtemp = permute(squeeze(G(:,:,i,j,:)),(/3,1,2/))
                 GG(:,:,i,j) = interp1(const%chiv, Gtemp, chi(1,i))
                 ! off-diagonal elements of L matrix 
                 Rmat(:,:,i,j) = 1.0/VT(j)/(1.0-1.5*mu(1,j)**2) * &
@@ -302,29 +307,49 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     ! initialize self-induced inflow dynamics 
     allocate(lambda_dot(3,nRot))
     lambda_dot = 0
+    allocate(b(3,1))
     ! self-induced inflow dynamics
     do i=1,nRot
         do j=1,nRot
             if (i==j) then
                 A = const%M
                 b = F(:,i) - matmul(inv(L(:,:,i,i)), lambda(:,i,i))
-                lambda_dot(:,i) = matmul(inv(A), b)
+                lambda_dot(:,i) = A\b
             end if
         end do
     end do
 
+    ! initialize system dynamics vector 
+    allocate(xdot(const%NSTATES,1))
+    ! inflow dynamics - hardcoded
+    xdot(1:3,1) = lambda_dot(1:3,1)
+    xdot(4:6,1) = lambda_dot(1:3,2)
+    !xdot(1,1:3*nRot)=reshape(lambda_dot,(/3*nRot,1/),order=(/2,1/)); 
+    ! add low pass filter of total inflow to dynamics 
+    lambda_tot_calc = (lambda_tot_new-lambda_tot_reshape)*200
+    xdot(7:9,1) = lambda_tot_calc(1:3,1)
+    xdot(10:12,1) = lambda_tot_calc(1:3,2)
+
     ! -------------------------------- OUTPUT ---------------------------------
 
     ! thrust [lb]
+    allocate(Ta(size(CTa,dim =1),size(CTa,dim =2)))
     Ta = CTa*rho*(pi*(R**2))*(Omega**2)*(R**2)
+    
     ! torque [lb-ft]
-    Q=CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i)**2);
+    allocate(Q(size(CP,dim =1),size(CP,dim =2)))
+    Q=CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i)**2)
+    
     ! power [hp]
-    Pow = CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i)**3)/550;
+    allocate(Pow(size(CP,dim =1),size(CP,dim =2)))
+    Pow = CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i)**3)/550
+    
     ! output
-    y_temp = (/ CTa, CP, Ta, Pow, Q /)
-    y = transpose(y_temp)
+    allocate(y_temp(1,(size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2))))
+    y_temp(1,:) = (/ CTa, CP, Ta, Pow, Q /)
     allocate(y((size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2)),1))
+    y = transpose(y_temp)
+    
     ! CTa, CP, Ta, Pow, Q
 
         
