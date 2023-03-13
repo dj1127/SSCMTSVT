@@ -28,8 +28,9 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     
     real*8,allocatable :: y_temp(:,:)
     real*8, allocatable :: F(:,:), V(:,:), chi(:,:), VT(:,:), mu(:,:), CTa(:,:), CP(:,:)
+    real*8 :: R(2,1)
     
-    real*8,dimension(2) :: R,sRot,xRot,yRot,zRot
+    real*8,dimension(2) :: sRot,xRot,yRot,zRot
     
     integer :: nRot
     
@@ -79,7 +80,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     ! --------------------------------------------------------------------------
     
     ! map constants data structure to local variables 
-    R = const%R
+    R(:,1) = const%R
     nRot = const%nRot
     sRot = const%sRot
     xRot = const%xRot
@@ -145,15 +146,15 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         wh = ww(i) - qq(i)*xRot(i) + pp(i)*yRot(i)
         
         ! Rotor hub advance ratios
-        mux = uh / Omega(i) / R(i)
+        mux = uh / Omega(i) / R(i,1)
         if (sRot(i) == 1) then
             ! CCW rotor
-            muy = vh / Omega(i) / R(i)
+            muy = vh / Omega(i) / R(i,1)
         else
             ! Switch sign for CW rotor
-            muy = -vh / Omega(i) / R(i)
+            muy = -vh / Omega(i) / R(i,1)
         end if
-        muz = wh / Omega(i) / R(i)
+        muz = wh / Omega(i) / R(i,1)
         
         ! in-plane advance ratio
         mu(1,i) = sqrt(mux**2 + muy**2)
@@ -376,15 +377,15 @@ subroutine CMTSVT(x,inp,const,xdot,y)
 
     ! thrust [lb]
     allocate(Ta(size(CTa,dim =1),size(CTa,dim =2)))
-    Ta = CTa*rho*(pi*(R**2))*(Omega**2)*(R**2)
+    Ta = CTa*rho*(pi*(R**2))*(Omega(i)**2)*(R(i,1)**2)
     
     ! torque [lb-ft]
     allocate(Q(size(CP,dim =1),size(CP,dim =2)))
-    Q=CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i)**2)
+    Q=CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i,1)**2)
     
     ! power [hp]
     allocate(Pow(size(CP,dim =1),size(CP,dim =2)))
-    Pow = CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i)**3)/550
+    Pow = CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i,1)**3)/550
     
     ! output
     allocate(y_temp(1,(size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2))))
