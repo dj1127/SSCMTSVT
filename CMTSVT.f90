@@ -342,7 +342,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     ! total inflow (self-induced + interference)
     do i=1,nRot
         lambda_sum = lambda(:,i,:)
-        lambda_tot_new(:,i) = sum(lambda_sum, dim=3)
+        lambda_tot_new(:,i) = sum(lambda_sum, dim=2)
         ! lambda_tot_new(:,i)=sum(lambda(:,:,i),2);
     end do
 
@@ -355,8 +355,8 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         do j=1,nRot
             if (i==j) then
                 A = const%M
-                b = F(:,i) - matmul(inv(L(:,:,i,i)), lambda(:,i,i))
-                lambda_dot(:,i) = A\b
+                b(:,1) = F(:,i) - matmul(inv(L(:,:,i,i)), lambda(:,i,i))
+                lambda_dot(:,i) = matmul(inv(A),b(:,1)) !A\b
             end if
         end do
     end do
