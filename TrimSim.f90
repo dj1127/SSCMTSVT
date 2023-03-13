@@ -1,4 +1,4 @@
-subroutine TrimSim(aircraft,x0,u0,targ_des,const,x0trim,u0trim,itrim)
+subroutine TrimSim(x0,u0,targ_des,const,x0trim,u0trim,itrim)
 
     use AllType
 
@@ -6,10 +6,11 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,const,x0trim,u0trim,itrim)
 
     type(const_struct) :: const
 
-    character(16), intent(in) :: aircraft
     real*8,intent(in) :: x0(12,1),u0(20,1),targ_des(14,1)
     real*8,intent(out) :: x0trim(12,1),u0trim(20,1),itrim
-    real*8,allocatable :: XSCALE(:,:),YSCALE(:,:),TRIMVARS(:),TRIMTARG(:),Jac_temp(:,:),Jac(:,:),Jac_mul(:,:),Jac_pinv(:,:)
+    !real*8,allocatable :: XSCALE(:,:),YSCALE(:,:),TRIMVARS(:),TRIMTARG(:),Jac_temp(:,:),Jac(:,:),Jac_mul(:,:),Jac_pinv(:,:)
+    real*8 :: XSCALE(12,1),YSCALE(10,1),TRIMVARS(14),TRIMTARG(14),&
+    Jac_temp(14,14),Jac(14,14),Jac_mul(14,14),Jac_pinv(14,1)
     real*8 :: NSTATES,NCTRLS
     real*8 :: A(12,12),B(12,20),C(10,12),D(10,20)
 
@@ -21,8 +22,10 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,const,x0trim,u0trim,itrim)
 
     ! ---------CMTSVT---------
     real*8 :: y0(10,1), xdot0(12,1)
-    real*8,allocatable :: temp(:,:), targvec(:,:), targ_err(:,:)
-    real*8,allocatable :: trimvec(:,:)
+    !real*8,allocatable :: temp(:,:), targvec(:,:), targ_err(:,:)
+    real*8 :: temp(22,1), targvec(22,1), targ_err(22,1)
+    !real*8,allocatable :: trimvec(:,:)
+    real*8 :: trimvec(22,1)
 
     ! External Subroutines
     EXTERNAL DGETRF
@@ -39,18 +42,18 @@ subroutine TrimSim(aircraft,x0,u0,targ_des,const,x0trim,u0trim,itrim)
     NCTRLS=const%NCTRLS;
 
     ! allocate array size
-    allocate(XSCALE(size(const%XSCALE,DIM=1),size(const%XSCALE,DIM=2)))
-    allocate(YSCALE(size(const%YSCALE,DIM=1),size(const%YSCALE,DIM=2)))
-    allocate(TRIMVARS(size(const%TRIMVARS)))
-    allocate(TRIMTARG(size(const%TRIMTARG)))
-    allocate(temp(size(xdot0, DIM = 1)+size(y0, DIM = 1),1))
-    allocate(targvec(size(temp,DIM=1),1))
-    allocate(targ_err(size(targvec,DIM=1),1))
-    allocate(trimvec(size(x0, DIM = 1)+size(u0, DIM = 1),1))
-    allocate(Jac_temp((size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2))))
-    allocate(Jac((size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2))))
-    allocate(Jac_mul((size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2))))
-    allocate(Jac_pinv((size(A,Dim=1)+size(C,Dim=1)), 1))
+    !allocate(XSCALE(size(const%XSCALE,DIM=1),size(const%XSCALE,DIM=2)))    ! 12x1
+    !allocate(YSCALE(size(const%YSCALE,DIM=1),size(const%YSCALE,DIM=2)))    ! 10x1
+    !allocate(TRIMVARS(size(const%TRIMVARS)))   ! 1x14
+    !allocate(TRIMTARG(size(const%TRIMTARG)))   ! 1x14
+    !allocate(temp(size(xdot0, DIM = 1)+size(y0, DIM = 1),1))   ! 22x1
+    !allocate(targvec(size(temp,DIM=1),1))  ! 22x1
+    !allocate(targ_err(size(targvec,DIM=1),1))  ! 22x1
+    !allocate(trimvec(size(x0, DIM = 1)+size(u0, DIM = 1),1))   ! 22x1
+    !allocate(Jac_temp((size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2))))   ! 14x14
+    !allocate(Jac((size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2))))    ! 14x14
+    !allocate(Jac_mul((size(A,Dim=1)+size(C,Dim=1)), (size(A,Dim=2)+size(B,Dim=2))))    ! 14x14
+    !allocate(Jac_pinv((size(A,Dim=1)+size(C,Dim=1)), 1))   ! 14X1
 
     ! initial state and control input guess
     x0trim = x0

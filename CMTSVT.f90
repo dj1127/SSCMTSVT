@@ -24,10 +24,12 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     type(const_struct),intent(in) :: const
     
     real*8,intent(in) :: x(12), inp(20)
-    real*8,intent(out),allocatable :: xdot(:,:),y(:,:)
+    real*8,intent(out),allocatable :: xdot(:),y(:,:)
     
-    real*8,allocatable :: y_temp(:,:)
-    real*8, allocatable :: F(:,:), V(:,:), chi(:,:), VT(:,:), mu(:,:), CTa(:,:), CP(:,:)
+    !real*8,allocatable :: y_temp(:,:)
+    real*8 :: y_temp(1,10)
+    !real*8, allocatable :: F(:,:), V(:,:), chi(:,:), VT(:,:), mu(:,:), CTa(:,:), CP(:,:)
+    real*8 :: F(3,2), V(1,2), chi(1,2), VT(1,2), mu(1,2), CTa(1,2), CP(1,2)
     real*8 :: R(2,1)
     
     real*8,dimension(2) :: sRot,xRot,yRot,zRot
@@ -63,19 +65,23 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     
     ! ---------------------- INFLOW DYNAMICS PARAMETERS------------------------
     
-    real*8, allocatable :: lambda(:,:,:), lambda_sum(:,:), L(:,:,:,:), Rmat(:,:,:,:), GG(:,:,:,:)
+    !real*8, allocatable :: lambda(:,:,:), lambda_sum(:,:), L(:,:,:,:), Rmat(:,:,:,:), GG(:,:,:,:)
+    real*8 :: lambda(3,2,2), lambda_sum(3,2), L(3,3,2,2), Rmat(3,3,2,2), GG(3,3,2,2)
 
-    real*8, allocatable :: lambda_tot_new(:,:), lambda_dot(:,:)
+    !real*8, allocatable :: lambda_tot_new(:,:), lambda_dot(:,:)
+    real*8 :: lambda_tot_new(3,2), lambda_dot(3,2)
     
     real*8 :: lambda_tot_calc(3,2)
 
-    real*8, allocatable :: A(:,:), b(:,:)
+    !real*8, allocatable :: A(:,:), b(:,:)
+    real*8 :: A(3,3), b(3,1)
 
     real*8 :: interp_G(1,3,3)
 
     ! -------------------------------- Result ----------------------------------
     
-    real*8, allocatable :: Ta(:,:), Q(:,:), Pow(:,:)
+    !real*8, allocatable :: Ta(:,:), Q(:,:), Pow(:,:)
+    real*8 :: Ta(1,2), Q(1,2), Pow(1,2)
 
     ! --------------------------------------------------------------------------
     
@@ -93,6 +99,8 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     delta0 = const%delta0
     delta2 = const%delta2
     NCTRLS = const%NCTRLS
+
+    
     
     ! unpack states
     lambda_s = x(1:3*nRot)
@@ -113,17 +121,17 @@ subroutine CMTSVT(x,inp,const,xdot,y)
 
     ! --------------------------------------------------------------------------
     ! allocate array size
-    allocate(xdot(const%NSTATES,1))
-    allocate(F(3,nRot))
-    allocate(V(1,nRot))
-    allocate(chi(1,nRot))
-    allocate(VT(1,nRot))
-    allocate(mu(1,nRot))
-    allocate(CTa(1,nRot))
-    allocate(CP(1,nRot))
+    !allocate(xdot(const%NSTATES,1))
+    !allocate(F(3,nRot)) ! 3x2
+    !allocate(V(1,nRot)) ! 1x2
+    !allocate(chi(1,nRot))   ! 1x2
+    !allocate(VT(1,nRot))    ! 1x2
+    !allocate(mu(1,nRot))    ! 1x2
+    !allocate(CTa(1,nRot))   ! 1x2
+    !allocate(CP(1,nRot))    ! 1x2
 
-    allocate(A(size(const%M,Dim=1),size(const%M,Dim=2)))
-    allocate(B(3,1))
+    !allocate(A(size(const%M,Dim=1),size(const%M,Dim=2)))    ! 3x3
+    !allocate(B(3,1))
     
     ! -------------------------- ROTOR AERODYNAMICS ---------------------------
     
@@ -137,6 +145,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     mu = 0
     CTa = 0
     CP = 0
+
 
     ! aerodynamic parameters for each rotor
     do i = 1,nRot
@@ -255,10 +264,10 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     ! --------------------------- INFLOW DYNAMICS -----------------------------
 
     ! initialize inflow matrix (contains self-induced and interference components)
-    allocate(lambda(3,nRot,nRot))
+    !allocate(lambda(3,nRot,nRot))
     lambda = 0
     
-    allocate(lambda_sum(3,nRot))
+    !allocate(lambda_sum(3,nRot))
     ! reshape self-induced inflow
     lambda_s_reshape = reshape(lambda_s, (/3,nRot/), order = (/ 2, 1 /))
     ! fill inflow matrix with self-induced inflow 
@@ -267,8 +276,8 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     end do
 
     ! initialize L and R matrices 
-    allocate(L(3,3,nRot,nRot))
-    allocate(Rmat(3,3,nRot,nRot))
+    !allocate(L(3,3,nRot,nRot))
+    !allocate(Rmat(3,3,nRot,nRot))
     L = 0
     Rmat = 0
     ! populate block diagonal elements of L matrix 
@@ -294,7 +303,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     end do
 
     ! initialize G matrix 
-    allocate(GG(3,3,nRot,nRot))
+    !allocate(GG(3,3,nRot,nRot))
     GG = 0
     ! populate L and R matrices
     do i=1,nRot
@@ -338,7 +347,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     end do
 
     ! initialize new total inflow matrix 
-    allocate(lambda_tot_new(3,nRot))
+    !allocate(lambda_tot_new(3,nRot))
     lambda_tot_new = 0
     ! total inflow (self-induced + interference)
     do i=1,nRot
@@ -348,9 +357,9 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     end do
 
     ! initialize self-induced inflow dynamics 
-    allocate(lambda_dot(3,nRot))
+    !allocate(lambda_dot(3,nRot))
     lambda_dot = 0
-    allocate(b(3,1))
+    !!allocate(b(3,1))
     ! self-induced inflow dynamics
     do i=1,nRot
         do j=1,nRot
@@ -363,10 +372,11 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     end do
 
     ! initialize system dynamics vector 
-    allocate(xdot(const%NSTATES,1))
+    !allocate(xdot(const%NSTATES,1))
     ! inflow dynamics - hardcoded
-    xdot(1:3,1) = lambda_dot(1:3,1)
-    xdot(4:6,1) = lambda_dot(1:3,2)
+    xdot(1:3,1) = lambda_dot(:,1)
+    xdot(4:6,1) = lambda_dot(:,2)
+    write(*,*) 'pass'
     !xdot(1,1:3*nRot)=reshape(lambda_dot,(/3*nRot,1/),order=(/2,1/)); 
     ! add low pass filter of total inflow to dynamics 
     lambda_tot_calc = (lambda_tot_new-lambda_tot_reshape)*200
@@ -376,24 +386,24 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     ! -------------------------------- OUTPUT ---------------------------------
 
     ! thrust [lb]
-    allocate(Ta(size(CTa,dim =1),size(CTa,dim =2)))
-    Ta = CTa*rho*(pi*(R**2))*(Omega(i)**2)*(R(i,1)**2)
+    !allocate(Ta(size(CTa,dim =1),size(CTa,dim =2)))
+    Ta = CTa*rho*(pi*(R(i,1)**2))*(Omega(i)**2)*(R(i,1)**2)
     
     ! torque [lb-ft]
-    allocate(Q(size(CP,dim =1),size(CP,dim =2)))
-    Q=CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i,1)**2)
+    !allocate(Q(size(CP,dim =1),size(CP,dim =2)))
+    Q=CP*rho*(pi*(R(i,1)**2))*(Omega(i)**3)*(R(i,1)**2)
     
     ! power [hp]
-    allocate(Pow(size(CP,dim =1),size(CP,dim =2)))
-    Pow = CP*rho*(pi*(R**2))*(Omega(i)**3)*(R(i,1)**3)/550
+    !allocate(Pow(size(CP,dim =1),size(CP,dim =2)))
+    Pow = CP*rho*(pi*(R(i,1)**2))*(Omega(i)**3)*(R(i,1)**3)/550
     
     ! output
-    allocate(y_temp(1,(size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2))))
+    !allocate(y_temp(1,(size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2))))
     y_temp(1,:) = (/ CTa, CP, Ta, Pow, Q /)
-    allocate(y((size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2)),1))
+    !allocate(y((size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2)),1))
     y = transpose(y_temp)
     
     ! CTa, CP, Ta, Pow, Q
 
-        
+
     end subroutine
