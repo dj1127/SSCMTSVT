@@ -100,7 +100,7 @@ subroutine CMTSVT(x,inp,const,xdot,y)
     delta2 = const%delta2
     NCTRLS = const%NCTRLS
 
-    
+    !write(*,*) R
     
     ! unpack states
     lambda_s = x(1:3*nRot)
@@ -185,6 +185,8 @@ subroutine CMTSVT(x,inp,const,xdot,y)
 
         !Th2w = reshape( (/1., 0., 0., 0., czeta, -szeta, 0., szeta, czeta/), (/3,3/), order = (/ 2, 1 /))
 
+        write(*,*) Th2W
+
         ! tansform roll and pitch rates to wind frame and non-dimensionalize
         if (sRot(i) == 1) then
             ! CCW rotor
@@ -261,147 +263,148 @@ subroutine CMTSVT(x,inp,const,xdot,y)
         chi(1,i)=pi/2-atan2(abs(lambda0_qs-muz),mu(1,i))
     end do
 
-    ! --------------------------- INFLOW DYNAMICS -----------------------------
 
-    ! initialize inflow matrix (contains self-induced and interference components)
-    !allocate(lambda(3,nRot,nRot))
-    lambda = 0
+    ! ! --------------------------- INFLOW DYNAMICS -----------------------------
+
+    ! ! initialize inflow matrix (contains self-induced and interference components)
+    ! !allocate(lambda(3,nRot,nRot))
+    ! lambda = 0
     
-    !allocate(lambda_sum(3,nRot))
-    ! reshape self-induced inflow
-    lambda_s_reshape = reshape(lambda_s, (/3,nRot/), order = (/ 2, 1 /))
-    ! fill inflow matrix with self-induced inflow 
-    do i=1,nRot
-        lambda(1:3,i,i) = lambda_s_reshape(1:3,i)
-    end do
+    ! !allocate(lambda_sum(3,nRot))
+    ! ! reshape self-induced inflow
+    ! lambda_s_reshape = reshape(lambda_s, (/3,nRot/), order = (/ 2, 1 /))
+    ! ! fill inflow matrix with self-induced inflow 
+    ! do i=1,nRot
+    !     lambda(1:3,i,i) = lambda_s_reshape(1:3,i)
+    ! end do
 
-    ! initialize L and R matrices 
-    !allocate(L(3,3,nRot,nRot))
-    !allocate(Rmat(3,3,nRot,nRot))
-    L = 0
-    Rmat = 0
-    ! populate block diagonal elements of L matrix 
-    do i=1,nRot
-        do j=1,nRot
-            if (i==j) then
-                ! block diagonal elements of L matrix 
-                L(:,:,1,1) = 0.5/VT(1,i)
-                L(:,:,1,2) = 0.
-                L(:,:,1,3) = 0.
-                L(:,:,2,1) = 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2)
-                L(:,:,2,2) = 4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i))))
-                L(:,:,2,3) = 0.
-                L(:,:,3,1) = 0.
-                L(:,:,3,2) = 0.
-                L(:,:,3,3) = 4/V(1,i)/(1.0+dcos(chi(1,i)))
+    ! ! initialize L and R matrices 
+    ! !allocate(L(3,3,nRot,nRot))
+    ! !allocate(Rmat(3,3,nRot,nRot))
+    ! L = 0
+    ! Rmat = 0
+    ! ! populate block diagonal elements of L matrix 
+    ! do i=1,nRot
+    !     do j=1,nRot
+    !         if (i==j) then
+    !             ! block diagonal elements of L matrix 
+    !             L(:,:,1,1) = 0.5/VT(1,i)
+    !             L(:,:,1,2) = 0.
+    !             L(:,:,1,3) = 0.
+    !             L(:,:,2,1) = 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2)
+    !             L(:,:,2,2) = 4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i))))
+    !             L(:,:,2,3) = 0.
+    !             L(:,:,3,1) = 0.
+    !             L(:,:,3,2) = 0.
+    !             L(:,:,3,3) = 4/V(1,i)/(1.0+dcos(chi(1,i)))
 
-                !L(:,:,i,j)= reshape((/ 0.5/VT(1,i), 0., 0., 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2),&
-                !            4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i)))), 0.0, 0.0, 0.0,&
-                !            4/V(1,i)/(1.0+dcos(chi(1,i))) /), (/3,3/), order = (/ 2, 1 /))
-            end if
-        end do
-    end do
+    !             !L(:,:,i,j)= reshape((/ 0.5/VT(1,i), 0., 0., 15*pi/(64*VT(1,i))*dtan(chi(1,i)/2),&
+    !             !            4*dcos(chi(1,i))/(V(1,i)*(1.0+dcos(chi(1,i)))), 0.0, 0.0, 0.0,&
+    !             !            4/V(1,i)/(1.0+dcos(chi(1,i))) /), (/3,3/), order = (/ 2, 1 /))
+    !         end if
+    !     end do
+    ! end do
 
-    ! initialize G matrix 
-    !allocate(GG(3,3,nRot,nRot))
-    GG = 0
-    ! populate L and R matrices
-    do i=1,nRot
-        do j=1,nRot
-            if (i/=j) then
-                ! interpolate G matrix based on skew angle 
-                Gtemp = permute(squeeze(G(:,:,i,j,:)),(/3,1,2/))
-                interp_G = interp1(const%chiv, Gtemp, chi(1,i))
-                GG(:,:,i,j) = reshape((/interp_G(:,:,1),interp_G(:,:,2),interp_G(:,:,3)/),(/3,3/),order = (/2,1/))
+    ! ! initialize G matrix 
+    ! !allocate(GG(3,3,nRot,nRot))
+    ! GG = 0
+    ! ! populate L and R matrices
+    ! do i=1,nRot
+    !     do j=1,nRot
+    !         if (i/=j) then
+    !             ! interpolate G matrix based on skew angle 
+    !             Gtemp = permute(squeeze(G(:,:,i,j,:)),(/3,1,2/))
+    !             interp_G = interp1(const%chiv, Gtemp, chi(1,i))
+    !             GG(:,:,i,j) = reshape((/interp_G(:,:,1),interp_G(:,:,2),interp_G(:,:,3)/),(/3,3/),order = (/2,1/))
 
-                ! off-diagonal elements of L matrix 
-                Rmat(:,:,1,1) = 1.
-                Rmat(:,:,1,2) = 0.
-                Rmat(:,:,1,3) = -3.0*mu(1,j)
-                Rmat(:,:,2,1) = 0.
-                Rmat(:,:,2,2) = 3.0*(1.0-1.5*mu(1,j)**2)
-                Rmat(:,:,2,3) = 0.
-                Rmat(:,:,3,1) = -1.5*mu(1,j)
-                Rmat(:,:,3,2) = 0.
-                Rmat(:,:,3,3) = 3.
+    !             ! off-diagonal elements of L matrix 
+    !             Rmat(:,:,1,1) = 1.
+    !             Rmat(:,:,1,2) = 0.
+    !             Rmat(:,:,1,3) = -3.0*mu(1,j)
+    !             Rmat(:,:,2,1) = 0.
+    !             Rmat(:,:,2,2) = 3.0*(1.0-1.5*mu(1,j)**2)
+    !             Rmat(:,:,2,3) = 0.
+    !             Rmat(:,:,3,1) = -1.5*mu(1,j)
+    !             Rmat(:,:,3,2) = 0.
+    !             Rmat(:,:,3,3) = 3.
                 
-                Rmat = Rmat * 1.0/(VT(1,j)*(1.0-1.5*mu(1,j)**2))
+    !             Rmat = Rmat * 1.0/(VT(1,j)*(1.0-1.5*mu(1,j)**2))
 
-                !Rmat(:,:,i,j) = 1.0/(VT(1,j)*(1.0-1.5*mu(1,j)**2)) * &
-                !                 (/ 1.0, 0.0, -3.0*mu(1,j), &
-                !                  0.0, 3.0*(1.0-1.5*mu(1,j)**2), 0.0, &
-                !                 -1.5*mu(1,j), 0.0, 3.0/)
-                L(:,:,i,j) = matmul(GG(:,:,i,j), matmul(Rmat(:,:,i,j), &
-                                   matmul(inv(L(:,:,j,j)),L(:,:,i,j))))
-            end if
-        end do
-    end do
+    !             !Rmat(:,:,i,j) = 1.0/(VT(1,j)*(1.0-1.5*mu(1,j)**2)) * &
+    !             !                 (/ 1.0, 0.0, -3.0*mu(1,j), &
+    !             !                  0.0, 3.0*(1.0-1.5*mu(1,j)**2), 0.0, &
+    !             !                 -1.5*mu(1,j), 0.0, 3.0/)
+    !             L(:,:,i,j) = matmul(GG(:,:,i,j), matmul(Rmat(:,:,i,j), &
+    !                                matmul(inv(L(:,:,j,j)),L(:,:,i,j))))
+    !         end if
+    !     end do
+    ! end do
 
-    ! populate inflow matrix with interference inflow (ignore transport delays for now)
-    do i=1,nRot
-        do j=1,nRot
-            if (i/=j) then
-                lambda(:,i,j) = matmul(L(:,:,i,j), lambda(:,j,j))
-            end if
-        end do
-    end do
+    ! ! populate inflow matrix with interference inflow (ignore transport delays for now)
+    ! do i=1,nRot
+    !     do j=1,nRot
+    !         if (i/=j) then
+    !             lambda(:,i,j) = matmul(L(:,:,i,j), lambda(:,j,j))
+    !         end if
+    !     end do
+    ! end do
 
-    ! initialize new total inflow matrix 
-    !allocate(lambda_tot_new(3,nRot))
-    lambda_tot_new = 0
-    ! total inflow (self-induced + interference)
-    do i=1,nRot
-        lambda_sum = lambda(:,i,:)
-        lambda_tot_new(:,i) = sum(lambda_sum, dim=2)
-        ! lambda_tot_new(:,i)=sum(lambda(:,:,i),2);
-    end do
+    ! ! initialize new total inflow matrix 
+    ! !allocate(lambda_tot_new(3,nRot))
+    ! lambda_tot_new = 0
+    ! ! total inflow (self-induced + interference)
+    ! do i=1,nRot
+    !     lambda_sum = lambda(:,i,:)
+    !     lambda_tot_new(:,i) = sum(lambda_sum, dim=2)
+    !     ! lambda_tot_new(:,i)=sum(lambda(:,:,i),2);
+    ! end do
 
-    ! initialize self-induced inflow dynamics 
-    !allocate(lambda_dot(3,nRot))
-    lambda_dot = 0
-    !!allocate(b(3,1))
-    ! self-induced inflow dynamics
-    do i=1,nRot
-        do j=1,nRot
-            if (i==j) then
-                A = const%M
-                b(:,1) = F(:,i) - matmul(inv(L(:,:,i,i)), lambda(:,i,i))
-                lambda_dot(:,i) = matmul(inv(A),b(:,1)) !A\b
-            end if
-        end do
-    end do
+    ! ! initialize self-induced inflow dynamics 
+    ! !allocate(lambda_dot(3,nRot))
+    ! lambda_dot = 0
+    ! !!allocate(b(3,1))
+    ! ! self-induced inflow dynamics
+    ! do i=1,nRot
+    !     do j=1,nRot
+    !         if (i==j) then
+    !             A = const%M
+    !             b(:,1) = F(:,i) - matmul(inv(L(:,:,i,i)), lambda(:,i,i))
+    !             lambda_dot(:,i) = matmul(inv(A),b(:,1)) !A\b
+    !         end if
+    !     end do
+    ! end do
 
-    ! initialize system dynamics vector 
-    !allocate(xdot(const%NSTATES,1))
-    ! inflow dynamics - hardcoded
-    xdot(1:3,1) = lambda_dot(:,1)
-    xdot(4:6,1) = lambda_dot(:,2)
-    write(*,*) 'pass'
-    !xdot(1,1:3*nRot)=reshape(lambda_dot,(/3*nRot,1/),order=(/2,1/)); 
-    ! add low pass filter of total inflow to dynamics 
-    lambda_tot_calc = (lambda_tot_new-lambda_tot_reshape)*200
-    xdot(7:9,1) = lambda_tot_calc(1:3,1)
-    xdot(10:12,1) = lambda_tot_calc(1:3,2)
+    ! ! initialize system dynamics vector 
+    ! !allocate(xdot(const%NSTATES,1))
+    ! ! inflow dynamics - hardcoded
+    ! xdot(1:3) = lambda_dot(:,1)
+    ! xdot(4:6) = lambda_dot(:,2)
+    ! write(*,*) 'pass'
+    ! !xdot(1,1:3*nRot)=reshape(lambda_dot,(/3*nRot,1/),order=(/2,1/)); 
+    ! ! add low pass filter of total inflow to dynamics 
+    ! lambda_tot_calc = (lambda_tot_new-lambda_tot_reshape)*200
+    ! xdot(7:9) = lambda_tot_calc(1:3,1)
+    ! xdot(10:12) = lambda_tot_calc(1:3,2)
 
-    ! -------------------------------- OUTPUT ---------------------------------
+    ! ! -------------------------------- OUTPUT ---------------------------------
 
-    ! thrust [lb]
-    !allocate(Ta(size(CTa,dim =1),size(CTa,dim =2)))
-    Ta = CTa*rho*(pi*(R(i,1)**2))*(Omega(i)**2)*(R(i,1)**2)
+    ! ! thrust [lb]
+    ! !allocate(Ta(size(CTa,dim =1),size(CTa,dim =2)))
+    ! Ta = CTa*rho*(pi*(R(i,1)**2))*(Omega(i)**2)*(R(i,1)**2)
     
-    ! torque [lb-ft]
-    !allocate(Q(size(CP,dim =1),size(CP,dim =2)))
-    Q=CP*rho*(pi*(R(i,1)**2))*(Omega(i)**3)*(R(i,1)**2)
+    ! ! torque [lb-ft]
+    ! !allocate(Q(size(CP,dim =1),size(CP,dim =2)))
+    ! Q=CP*rho*(pi*(R(i,1)**2))*(Omega(i)**3)*(R(i,1)**2)
     
-    ! power [hp]
-    !allocate(Pow(size(CP,dim =1),size(CP,dim =2)))
-    Pow = CP*rho*(pi*(R(i,1)**2))*(Omega(i)**3)*(R(i,1)**3)/550
+    ! ! power [hp]
+    ! !allocate(Pow(size(CP,dim =1),size(CP,dim =2)))
+    ! Pow = CP*rho*(pi*(R(i,1)**2))*(Omega(i)**3)*(R(i,1)**3)/550
     
-    ! output
-    !allocate(y_temp(1,(size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2))))
-    y_temp(1,:) = (/ CTa, CP, Ta, Pow, Q /)
-    !allocate(y((size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2)),1))
-    y = transpose(y_temp)
+    ! ! output
+    ! !allocate(y_temp(1,(size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2))))
+    ! y_temp(1,:) = (/ CTa, CP, Ta, Pow, Q /)
+    ! !allocate(y((size(CTa,Dim=2)+size(CP,Dim=2)+size(Ta,Dim=2)+size(Pow,Dim=2)+size(Q,Dim=2)),1))
+    ! y = transpose(y_temp)
     
     ! CTa, CP, Ta, Pow, Q
 
