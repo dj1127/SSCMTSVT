@@ -390,7 +390,7 @@ Program main
                 end do
             end do
             ! save G matrix to file
-            open(1, file = 'G_TRV80_2rot.dat', status='new')
+            open(1, file = 'G_TRV80_2rot.dat', status='old')
             do a =1,10
                 do b =1,2
                     do c = 1,2
@@ -577,6 +577,8 @@ Program main
     ! trim simulation 
     call TrimSim(x0,u0,targ_des,const,x0trim,u0trim,itrim); 
     ! trim output 
+
+
     call CMTSVT(x0trim,u0trim,const,NULL,y0trim);
 
 
@@ -666,15 +668,15 @@ Program main
     print *,' '
         
 
-24  format(1x, f6.4)
+24  format(A16, 2x, f6.4)
 
-15  format(1x, f6.5)
+15  format(A16, 2x, f6.5)
 
-52  format(1x, f7.2)
+52  format(A16, 2x, f7.2)
 
-21  format(1x, f3.1)
+21  format(A16, 2x, f3.1)
 
-31  format(1x, f4.1)
+31  format(A16, 2x, f4.1)
 
 end program main
 
